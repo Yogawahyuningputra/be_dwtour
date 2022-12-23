@@ -64,7 +64,8 @@ func (h *handlerTrip) CreateTrip(w http.ResponseWriter, r *http.Request) {
 	dataContex := r.Context().Value("dataFile")
 	filename := dataContex.(string)
 
-	price, _ := strconv.Atoi("price")
+	country_id, _ := strconv.Atoi(r.FormValue("country_id"))
+	price, _ := strconv.Atoi(r.FormValue("price"))
 	request := tripdto.TripRequest{
 		Title:          r.FormValue("title"),
 		Acomodation:    r.FormValue("acomodation"),
@@ -76,6 +77,7 @@ func (h *handlerTrip) CreateTrip(w http.ResponseWriter, r *http.Request) {
 		Price:          price,
 		Quota:          r.FormValue("quota"),
 		Description:    r.FormValue("description"),
+		CountryID:      country_id,
 	}
 
 	validation := validator.New()
@@ -87,9 +89,8 @@ func (h *handlerTrip) CreateTrip(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	trip := models.Trip{
-		ID:    request.ID,
-		Title: request.Title,
-		// Country:        request.Country,
+		ID:             request.ID,
+		Title:          request.Title,
 		Acomodation:    request.Acomodation,
 		Transportation: request.Transportation,
 		Eat:            request.Eat,
@@ -100,8 +101,7 @@ func (h *handlerTrip) CreateTrip(w http.ResponseWriter, r *http.Request) {
 		Quota:          request.Quota,
 		Description:    request.Description,
 		Image:          filename,
-		// User:           request.User,
-		// UserID: userId,
+		CountryID:      request.CountryID,
 	}
 	// fmt.Println(trip)
 	trip, err = h.TripRepository.CreateTrip(trip)
@@ -121,9 +121,9 @@ func (h *handlerTrip) CreateTrip(w http.ResponseWriter, r *http.Request) {
 
 func convertResponseTrip(u models.Trip) tripdto.TripResponse {
 	return tripdto.TripResponse{
-		ID:    u.ID,
-		Title: u.Title,
-		// Country:        u.Country,
+		ID:             u.ID,
+		Title:          u.Title,
+		CountryID:      u.CountryID,
 		Acomodation:    u.Acomodation,
 		Transportation: u.Transportation,
 		Eat:            u.Eat,
