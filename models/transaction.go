@@ -7,6 +7,7 @@ type Transaction struct {
 	Qty        int       `json:"qty" gorm:"type:varchar(255)"`
 	Status     string    `json:"status" gorm:"type:varchar(255)"`
 	Attachment string    `json:"attachment" gorm:"type: varchar(255)"`
+	Total      string    `json:"total" gorm:"type: varchar(255)"`
 	User       User      `json:"user"`
 	UserID     int       `json:"user_id"`
 	Trip       Trip      `json:"trip"`

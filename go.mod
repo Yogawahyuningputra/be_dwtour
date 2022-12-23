@@ -9,6 +9,8 @@ require (
 	gorm.io/gorm v1.24.2
 )
 
+require github.com/joho/godotenv v1.4.0
+
 require (
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
