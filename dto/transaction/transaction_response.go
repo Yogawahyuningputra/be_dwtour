@@ -1,17 +1,9 @@
-package models
+package transactiondto
 
-import "time"
-
-type Transaction struct {
-	ID         int    `json:"id"`
+type TransactionResponse struct {
 	Qty        int    `json:"qty" gorm:"type:varchar(255)"`
 	Status     string `json:"status" gorm:"type:varchar(255)"`
 	Attachment string `json:"attachment" gorm:"type: varchar(255)"`
 	Total      string `json:"total" gorm:"type: varchar(255)"`
-	Trip       Trip   `json:"trip"`
 	TripID     int    `json:"trip_id"`
-	// User       User      `json:"user"`
-	// UserID     int       `json:"user_id"`
-	CreatedAt time.Time `json:"-"`
-	UpdatedAt time.Time `json:"-"`
 }

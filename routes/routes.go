@@ -9,5 +9,6 @@ func RouteInit(r *mux.Router) {
 	AuthRoutes(r)
 	CountryRoutes(r)
 	TripRoutes(r)
+	TransactionRoutes(r)
 
 }

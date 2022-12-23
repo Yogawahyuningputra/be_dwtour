@@ -34,7 +34,7 @@ func (r *repository) GetTrip(ID int) (models.Trip, error) {
 
 func (r *repository) CreateTrip(trip models.Trip) (models.Trip, error) {
 	// err := r.db.Exec("INSERT INTO trips(title)VALUES(?)", trip.Title).Error
-	err := r.db.Create(&trip).Error // ORM
+	err := r.db.Preload("Country").Create(&trip).Error // ORM
 
 	return trip, err
 }

@@ -10,7 +10,6 @@ import (
 	"strconv"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/golang-jwt/jwt/v4"
 	"github.com/gorilla/mux"
 )
 
@@ -62,16 +61,12 @@ func (h *handlerTrip) GetTrip(w http.ResponseWriter, r *http.Request) {
 func (h *handlerTrip) CreateTrip(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	userInfo := r.Context().Value("userInfo").(jwt.MapClaims)
-	userId := int(userInfo["id"].(float64))
-
 	dataContex := r.Context().Value("dataFile")
 	filename := dataContex.(string)
 
 	price, _ := strconv.Atoi("price")
 	request := tripdto.TripRequest{
-		Title: r.FormValue("title"),
-		// Country: r.FormValue("country"),
+		Title:          r.FormValue("title"),
 		Acomodation:    r.FormValue("acomodation"),
 		Transportation: r.FormValue("transportation"),
 		Eat:            r.FormValue("eat"),
@@ -106,7 +101,7 @@ func (h *handlerTrip) CreateTrip(w http.ResponseWriter, r *http.Request) {
 		Description:    request.Description,
 		Image:          filename,
 		// User:           request.User,
-		UserID: userId,
+		// UserID: userId,
 	}
 	// fmt.Println(trip)
 	trip, err = h.TripRepository.CreateTrip(trip)
@@ -126,9 +121,9 @@ func (h *handlerTrip) CreateTrip(w http.ResponseWriter, r *http.Request) {
 
 func convertResponseTrip(u models.Trip) tripdto.TripResponse {
 	return tripdto.TripResponse{
-		ID:             u.ID,
-		Title:          u.Title,
-		Country:        u.Country,
+		ID:    u.ID,
+		Title: u.Title,
+		// Country:        u.Country,
 		Acomodation:    u.Acomodation,
 		Transportation: u.Transportation,
 		Eat:            u.Eat,
