@@ -110,16 +110,33 @@ func convertResponseTransaction(u models.Transaction) transactiondto.Transaction
 		Image:  u.Image,
 		Total:  u.Total,
 		TripID: u.TripID,
+		UserID: u.UserID,
 	}
 }
 
 func (h *handlerTransaction) UpdateTransaction(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	request := new(transactiondto.TransactionRequest)
-	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
+	dataContex := r.Context().Value("dataFile")
+	filename := dataContex.(string)
+
+	qty, _ := strconv.Atoi(r.FormValue("qty"))
+	trip_id, _ := strconv.Atoi(r.FormValue("trip_id"))
+	user_id, _ := strconv.Atoi(r.FormValue("user_id"))
+	total, _ := strconv.Atoi(r.FormValue("total"))
+	request := transactiondto.TransactionRequest{
+		Qty:    qty,
+		Status: r.FormValue("status"),
+		// Image: r.FormValue("image"),
+		Total:  total,
+		TripID: trip_id,
+		UserID: user_id,
+	}
+	validation := validator.New()
+	err := validation.Struct(request)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
 		json.NewEncoder(w).Encode(response)
 		return
 	}
@@ -139,7 +156,7 @@ func (h *handlerTransaction) UpdateTransaction(w http.ResponseWriter, r *http.Re
 		transaction.Status = request.Status
 	}
 	if request.Image != "" {
-		transaction.Image = request.Image
+		transaction.Image = filename
 	}
 	if request.Total != 0 {
 		transaction.Total = request.Total

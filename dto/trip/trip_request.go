@@ -7,8 +7,8 @@ type TripRequest struct {
 	Acomodation    string `json:"acomodation" form:"acomodation" gorm:"type:varchar(255)"`
 	Transportation string `json:"transportation" form:"transportation" gorm:"type:varchar(255)"`
 	Eat            string `json:"eat" form:"eat" gorm:"type:varchar(255)"`
-	Day            string `json:"day" form:"day" gorm:"type:varchar(255)"`
-	Night          string `json:"night" form:"night" gorm:"type:varchar(255)"`
+	Day            int    `json:"day" form:"day" gorm:"type:varchar(255)"`
+	Night          int    `json:"night" form:"night" gorm:"type:varchar(255)"`
 	DateTrip       string `json:"date_trip" form:"date_trip" gorm:"type:varchar(255)"`
 	Price          int    `json:"price" form:"price" gorm:"type:varchar(255)"`
 	Quota          int    `json:"quota" form:"quota" gorm:"type:varchar(255)"`

@@ -107,6 +107,7 @@ func (h *handlerAuth) Login(w http.ResponseWriter, r *http.Request) {
 
 	claims := jwt.MapClaims{}
 	claims["id"] = user.ID
+	claims["email"] = user.Email
 	claims["exp"] = time.Now().Add(time.Hour * 2).Unix() // 2 jam expire
 
 	token, errGenerateToken := jwtToken.GenerateToken(&claims)

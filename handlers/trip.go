@@ -67,13 +67,15 @@ func (h *handlerTrip) CreateTrip(w http.ResponseWriter, r *http.Request) {
 	country_id, _ := strconv.Atoi(r.FormValue("country_id"))
 	price, _ := strconv.Atoi(r.FormValue("price"))
 	quota, _ := strconv.Atoi(r.FormValue("quota"))
+	day, _ := strconv.Atoi(r.FormValue("day"))
+	night, _ := strconv.Atoi(r.FormValue("night"))
 	request := tripdto.TripRequest{
 		Title:          r.FormValue("title"),
 		Acomodation:    r.FormValue("acomodation"),
 		Transportation: r.FormValue("transportation"),
 		Eat:            r.FormValue("eat"),
-		Day:            r.FormValue("day"),
-		Night:          r.FormValue("night"),
+		Day:            day,
+		Night:          night,
 		DateTrip:       r.FormValue("date_trip"),
 		Price:          price,
 		Quota:          quota,
@@ -141,10 +143,33 @@ func convertResponseTrip(u models.Trip) tripdto.TripResponse {
 func (h *handlerTrip) UpdateTrip(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	request := new(tripdto.TripRequest)
-	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
+	dataContex := r.Context().Value("dataFile")
+	filename := dataContex.(string)
+
+	country_id, _ := strconv.Atoi(r.FormValue("country_id"))
+	price, _ := strconv.Atoi(r.FormValue("price"))
+	quota, _ := strconv.Atoi(r.FormValue("quota"))
+	day, _ := strconv.Atoi(r.FormValue("day"))
+	night, _ := strconv.Atoi(r.FormValue("night"))
+	request := tripdto.TripRequest{
+		Title:          r.FormValue("title"),
+		Acomodation:    r.FormValue("acomodation"),
+		Transportation: r.FormValue("transportation"),
+		Eat:            r.FormValue("eat"),
+		Day:            day,
+		Night:          night,
+		DateTrip:       r.FormValue("date_trip"),
+		Price:          price,
+		Quota:          quota,
+		Description:    r.FormValue("description"),
+		CountryID:      country_id,
+	}
+
+	validation := validator.New()
+	err := validation.Struct(request)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
 		json.NewEncoder(w).Encode(response)
 		return
 	}
@@ -173,10 +198,10 @@ func (h *handlerTrip) UpdateTrip(w http.ResponseWriter, r *http.Request) {
 	if request.Eat != "" {
 		trip.Eat = request.Eat
 	}
-	if request.Day != "" {
+	if request.Day != 0 {
 		trip.Day = request.Day
 	}
-	if request.Night != "" {
+	if request.Night != 0 {
 		trip.Night = request.Night
 	}
 	if request.DateTrip != "" {
@@ -192,7 +217,7 @@ func (h *handlerTrip) UpdateTrip(w http.ResponseWriter, r *http.Request) {
 		trip.Description = request.Description
 	}
 	if request.Image != "" {
-		trip.Image = request.Image
+		trip.Image = filename
 	}
 	data, err := h.TripRepository.UpdateTrip(trip, id)
 	if err != nil {
