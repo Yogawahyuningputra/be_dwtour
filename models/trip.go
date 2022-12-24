@@ -14,11 +14,9 @@ type Trip struct {
 	Night          string  `json:"night" gorm:"type:varchar(255)"`
 	DateTrip       string  `json:"date_trip" gorm:"type:varchar(255)"`
 	Price          int     `json:"price" gorm:"type:varchar(255)"`
-	Quota          string  `json:"quota" gorm:"type:varchar(255)"`
+	Quota          int     `json:"quota" gorm:"type:varchar(255)"`
 	Description    string  `json:"description" gorm:"type:varchar(255)"`
 	Image          string  `json:"image" form:"image" gorm:"type:varchar(255)"`
-	// User           UsersResponse `json:"user" gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
-	// UserID int `json:"user_id"`
 }
 
 type TripResponse struct {
@@ -32,7 +30,7 @@ type TripResponse struct {
 	Night          string    `json:"night" gorm:"type:varchar(255)"`
 	DateTrip       time.Time `json:"date_trip" gorm:"type:varchar(255)"`
 	Price          int       `json:"price" gorm:"type:varchar(255)"`
-	Quota          string    `json:"quota" gorm:"type:varchar(255)"`
+	Quota          int       `json:"quota" gorm:"type:varchar(255)"`
 	Description    string    `json:"description" gorm:"type:varchar(255)"`
 	Image          string    `json:"image" form:"image" gorm:"type:varchar(255)"`
 }

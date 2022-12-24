@@ -21,14 +21,14 @@ func RepositoryTrip(db *gorm.DB) *repository {
 func (r *repository) FindTrips() ([]models.Trip, error) {
 	var trips []models.Trip
 	// err := r.db.Raw("SELECT * FROM trips").Scan(&trips).Error
-	err := r.db.Find(&trips).Error // ORM
+	err := r.db.Preload("Country").Find(&trips).Error // ORM
 	return trips, err
 }
 
 func (r *repository) GetTrip(ID int) (models.Trip, error) {
 	var trip models.Trip
 	// err := r.db.Raw("SELECT * FROM trips WHERE id=?", ID).Scan(&trip).Error
-	err := r.db.First(&trip, ID).Error // ORM
+	err := r.db.Preload("Country").First(&trip, ID).Error // ORM
 	return trip, err
 }
 
@@ -39,7 +39,7 @@ func (r *repository) CreateTrip(trip models.Trip) (models.Trip, error) {
 	return trip, err
 }
 func (r *repository) UpdateTrip(trip models.Trip, ID int) (models.Trip, error) {
-	err := r.db.Save(&trip).Error
+	err := r.db.Preload("Country").Save(&trip).Error
 	return trip, err
 }
 func (r *repository) DeleteTrip(trip models.Trip, ID int) (models.Trip, error) {

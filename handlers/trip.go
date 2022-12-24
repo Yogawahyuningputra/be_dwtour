@@ -66,6 +66,7 @@ func (h *handlerTrip) CreateTrip(w http.ResponseWriter, r *http.Request) {
 
 	country_id, _ := strconv.Atoi(r.FormValue("country_id"))
 	price, _ := strconv.Atoi(r.FormValue("price"))
+	quota, _ := strconv.Atoi(r.FormValue("quota"))
 	request := tripdto.TripRequest{
 		Title:          r.FormValue("title"),
 		Acomodation:    r.FormValue("acomodation"),
@@ -75,7 +76,7 @@ func (h *handlerTrip) CreateTrip(w http.ResponseWriter, r *http.Request) {
 		Night:          r.FormValue("night"),
 		DateTrip:       r.FormValue("date_trip"),
 		Price:          price,
-		Quota:          r.FormValue("quota"),
+		Quota:          quota,
 		Description:    r.FormValue("description"),
 		CountryID:      country_id,
 	}
@@ -156,8 +157,12 @@ func (h *handlerTrip) UpdateTrip(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(response)
 		return
 	}
+
 	if request.Title != "" {
 		trip.Title = request.Title
+	}
+	if request.CountryID != 0 {
+		trip.CountryID = request.CountryID
 	}
 	if request.Acomodation != "" {
 		trip.Acomodation = request.Acomodation
@@ -180,7 +185,7 @@ func (h *handlerTrip) UpdateTrip(w http.ResponseWriter, r *http.Request) {
 	if request.Price != 0 {
 		trip.Price = request.Price
 	}
-	if request.Quota != "" {
+	if request.Quota != 0 {
 		trip.Quota = request.Quota
 	}
 	if request.Description != "" {
