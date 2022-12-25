@@ -11,11 +11,14 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt/v4"
 )
+
+var path_profile = "http://localhost:5000/uploads/"
 
 type handlerAuth struct {
 	AuthRepository repositories.AuthRepository
@@ -28,12 +31,17 @@ func HandlerAuth(AuthRepository repositories.AuthRepository) *handlerAuth {
 func (h *handlerAuth) Register(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	request := new(authdto.RegisterRequest)
-	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
-		json.NewEncoder(w).Encode(response)
-		return
+	dataContex := r.Context().Value("dataFile")
+	filename := path_profile + dataContex.(string)
+
+	phone, _ := strconv.Atoi(r.FormValue("phone"))
+	request := authdto.RegisterRequest{
+		Fullname: r.FormValue("fullname"),
+		Email:    r.FormValue("email"),
+		Password: r.FormValue("password"),
+		Gender:   r.FormValue("gender"),
+		Phone:    phone,
+		Address:  r.FormValue("address"),
 	}
 
 	validation := validator.New()
@@ -56,9 +64,10 @@ func (h *handlerAuth) Register(w http.ResponseWriter, r *http.Request) {
 		Fullname: request.Fullname,
 		Email:    request.Email,
 		Password: password,
+		Gender:   request.Gender,
 		Phone:    request.Phone,
 		Address:  request.Address,
-		Image:    request.Image,
+		Image:    filename,
 	}
 
 	data, err := h.AuthRepository.Register(user)
@@ -75,12 +84,9 @@ func (h *handlerAuth) Register(w http.ResponseWriter, r *http.Request) {
 func (h *handlerAuth) Login(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	request := new(authdto.LoginRequest)
-	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
-		json.NewEncoder(w).Encode(response)
-		return
+	request := authdto.LoginRequest{
+		Email:    r.FormValue("email"),
+		Password: r.FormValue("password"),
 	}
 
 	user := models.User{

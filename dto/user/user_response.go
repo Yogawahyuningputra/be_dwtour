@@ -5,7 +5,8 @@ type UserResponse struct {
 	Fullname string `json:"fullname" form:"fullname"`
 	Email    string `json:"email" form:"email" `
 	Password string `json:"password" form:"password"`
-	Phone    string `json:"phone" form:"password"`
-	Address  string `json:"address" form:"password"`
+	Gender   string `json:"gender" form:"gender"`
+	Phone    int    `json:"phone" form:"phone"`
+	Address  string `json:"address" form:"address"`
 	Image    string `json:"image" form:"image"`
 }

@@ -10,6 +10,7 @@ import (
 	"strconv"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/gorilla/mux"
 )
 
@@ -32,7 +33,7 @@ func (h *handlerTransaction) FindTransactions(w http.ResponseWriter, r *http.Req
 		json.NewEncoder(w).Encode(response)
 	}
 	for i, p := range transactions {
-		transactions[i].Image = path_files + p.Image
+		transactions[i].Attachment = path_files + p.Attachment
 	}
 	w.WriteHeader(http.StatusOK)
 	response := dto.SuccessResult{Code: http.StatusOK, Data: transactions}
@@ -47,10 +48,11 @@ func (h *handlerTransaction) GetTransaction(w http.ResponseWriter, r *http.Reque
 	transaction, err := h.TransactionRepository.GetTransaction(id)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
+		response := dto.SuccessResult{Code: http.StatusOK, Data: transaction}
 		json.NewEncoder(w).Encode(response)
 	}
-
+	transaction.Attachment = path_file + transaction.Attachment
+	// fmt.Println(id)
 	w.WriteHeader(http.StatusOK)
 	response := dto.SuccessResult{Code: http.StatusOK, Data: transaction}
 	json.NewEncoder(w).Encode(response)
@@ -59,17 +61,26 @@ func (h *handlerTransaction) GetTransaction(w http.ResponseWriter, r *http.Reque
 func (h *handlerTransaction) CreateTransaction(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
+	userInfo := r.Context().Value("userInfo").(jwt.MapClaims)
+	status := userInfo["email"]
+	if status == "admin@mail.com" {
+		w.WriteHeader(http.StatusBadRequest)
+		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: "Sorry, you can't make a transaction"}
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
 	dataContex := r.Context().Value("dataFile")
-	filename := dataContex.(string)
+	filename := path_files + dataContex.(string)
 
 	qty, _ := strconv.Atoi(r.FormValue("qty"))
 	trip_id, _ := strconv.Atoi(r.FormValue("trip_id"))
 	user_id, _ := strconv.Atoi(r.FormValue("user_id"))
 	total, _ := strconv.Atoi(r.FormValue("total"))
+
 	request := transactiondto.TransactionRequest{
 		Qty:    qty,
 		Status: r.FormValue("status"),
-		// Image: r.FormValue("image"),
 		Total:  total,
 		TripID: trip_id,
 		UserID: user_id,
@@ -83,12 +94,12 @@ func (h *handlerTransaction) CreateTransaction(w http.ResponseWriter, r *http.Re
 		return
 	}
 	transaction := models.Transaction{
-		Qty:    request.Qty,
-		Status: request.Status,
-		Image:  filename,
-		Total:  request.Total,
-		TripID: request.TripID,
-		UserID: request.UserID,
+		Qty:        request.Qty,
+		Status:     request.Status,
+		Attachment: filename,
+		Total:      request.Total,
+		TripID:     request.TripID,
+		UserID:     request.UserID,
 	}
 	transaction, err = h.TransactionRepository.CreateTransaction(transaction)
 	if err != nil {
@@ -105,12 +116,14 @@ func (h *handlerTransaction) CreateTransaction(w http.ResponseWriter, r *http.Re
 }
 func convertResponseTransaction(u models.Transaction) transactiondto.TransactionResponse {
 	return transactiondto.TransactionResponse{
-		Qty:    u.Qty,
-		Status: u.Status,
-		Image:  u.Image,
-		Total:  u.Total,
-		TripID: u.TripID,
-		UserID: u.UserID,
+		ID:         u.ID,
+		Qty:        u.Qty,
+		Status:     u.Status,
+		Attachment: u.Attachment,
+		Total:      u.Total,
+		TripID:     u.TripID,
+		Trip:       u.Trip,
+		UserID:     u.UserID,
 	}
 }
 
@@ -118,19 +131,19 @@ func (h *handlerTransaction) UpdateTransaction(w http.ResponseWriter, r *http.Re
 	w.Header().Set("Content-Type", "application/json")
 
 	dataContex := r.Context().Value("dataFile")
-	filename := dataContex.(string)
+	filename := path_files + dataContex.(string)
 
 	qty, _ := strconv.Atoi(r.FormValue("qty"))
 	trip_id, _ := strconv.Atoi(r.FormValue("trip_id"))
 	user_id, _ := strconv.Atoi(r.FormValue("user_id"))
 	total, _ := strconv.Atoi(r.FormValue("total"))
 	request := transactiondto.TransactionRequest{
-		Qty:    qty,
-		Status: r.FormValue("status"),
-		// Image: r.FormValue("image"),
-		Total:  total,
-		TripID: trip_id,
-		UserID: user_id,
+		Qty:        qty,
+		Status:     r.FormValue("status"),
+		Total:      total,
+		TripID:     trip_id,
+		UserID:     user_id,
+		Attachment: filename,
 	}
 	validation := validator.New()
 	err := validation.Struct(request)
@@ -155,8 +168,8 @@ func (h *handlerTransaction) UpdateTransaction(w http.ResponseWriter, r *http.Re
 	if request.Status != "" {
 		transaction.Status = request.Status
 	}
-	if request.Image != "" {
-		transaction.Image = filename
+	if request.Attachment != "" {
+		transaction.Attachment = filename
 	}
 	if request.Total != 0 {
 		transaction.Total = request.Total

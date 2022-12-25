@@ -61,6 +61,7 @@ func convertResponse(u models.User) userdto.UserResponse {
 		Email:    u.Email,
 		Password: u.Password,
 		Phone:    u.Phone,
+		Gender:   u.Gender,
 		Address:  u.Address,
 		Image:    u.Image,
 	}
@@ -69,12 +70,17 @@ func convertResponse(u models.User) userdto.UserResponse {
 func (h *handlerUser) CreateUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", "application/json")
 
-	request := new(userdto.CreateUserRequest)
-	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
-		json.NewEncoder(w).Encode(response)
-		return
+	dataContex := r.Context().Value("dataFile")
+	filename := path_profile + dataContex.(string)
+
+	phone, _ := strconv.Atoi(r.FormValue("phone"))
+	request := userdto.CreateUserRequest{
+		Fullname: r.FormValue("fullname"),
+		Email:    r.FormValue("email"),
+		Password: r.FormValue("password"),
+		Gender:   r.FormValue("gender"),
+		Phone:    phone,
+		Address:  r.FormValue("address"),
 	}
 	validation := validator.New()
 	err := validation.Struct(request)
@@ -94,9 +100,10 @@ func (h *handlerUser) CreateUser(w http.ResponseWriter, r *http.Request) {
 		Fullname: request.Fullname,
 		Email:    request.Email,
 		Password: password,
+		Gender:   request.Gender,
 		Phone:    request.Phone,
 		Address:  request.Address,
-		Image:    request.Image,
+		Image:    filename,
 	}
 
 	data, err := h.UserRepository.CreateUser(user)
@@ -113,12 +120,18 @@ func (h *handlerUser) CreateUser(w http.ResponseWriter, r *http.Request) {
 func (h *handlerUser) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	request := new(userdto.UpdateUserRequest)
-	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
-		json.NewEncoder(w).Encode(response)
-		return
+	dataContex := r.Context().Value("dataFile")
+	filename := path_profile + dataContex.(string)
+
+	phone, _ := strconv.Atoi(r.FormValue("phone"))
+	request := userdto.CreateUserRequest{
+		Fullname: r.FormValue("fullname"),
+		Email:    r.FormValue("email"),
+		Password: r.FormValue("password"),
+		Gender:   r.FormValue("gender"),
+		Phone:    phone,
+		Address:  r.FormValue("address"),
+		Image:    filename,
 	}
 
 	id, _ := strconv.Atoi(mux.Vars(r)["id"])
@@ -130,6 +143,12 @@ func (h *handlerUser) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(response)
 		return
 	}
+	password, err := bcrypt.HashingPassword(request.Password)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
+		json.NewEncoder(w).Encode(response)
+	}
 
 	if request.Fullname != "" {
 		user.Fullname = request.Fullname
@@ -138,16 +157,19 @@ func (h *handlerUser) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		user.Email = request.Email
 	}
 	if request.Password != "" {
-		user.Password = request.Password
+		user.Password = password
 	}
-	if request.Phone != "" {
+	if request.Gender != "" {
+		user.Gender = request.Gender
+	}
+	if request.Phone != 0 {
 		user.Phone = request.Phone
 	}
 	if request.Address != "" {
 		user.Address = request.Address
 	}
 	if request.Image != "" {
-		user.Image = request.Image
+		user.Image = filename
 	}
 	data, err := h.UserRepository.UpdateUser(user, id)
 	if err != nil {

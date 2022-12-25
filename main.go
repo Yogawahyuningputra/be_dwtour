@@ -20,7 +20,7 @@ func main() {
 	database.RunMigration()
 	r := mux.NewRouter()
 	routes.RouteInit(r.PathPrefix("/api/v1").Subrouter())
-	// r.PathPrefix("/uploads").Handler(http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads"))))
+	r.PathPrefix("/uploads").Handler(http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads"))))
 
 	fmt.Println("Server running on port 5000")
 	http.ListenAndServe("localhost: 5000", r)

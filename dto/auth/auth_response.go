@@ -10,6 +10,6 @@ type RegisterResponse struct {
 }
 type CheckAuthResponse struct {
 	ID       int    `json:"id"`
-	Fullname string `gorm:"type: varchar(255)" json:"name"`
+	Fullname string `gorm:"type: varchar(255)" json:"fullname"`
 	Email    string `gorm:"type: varchar(255)" json:"email"`
 }

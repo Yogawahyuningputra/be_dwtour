@@ -3,7 +3,7 @@ package tripdto
 type TripRequest struct {
 	ID             int    `json:"id"`
 	Title          string `json:"title" form:"title" gorm:"type:varchar(255)"`
-	CountryID      int    `json:"country_id"`
+	CountryID      int    `json:"country_id" form:"country_id"`
 	Acomodation    string `json:"acomodation" form:"acomodation" gorm:"type:varchar(255)"`
 	Transportation string `json:"transportation" form:"transportation" gorm:"type:varchar(255)"`
 	Eat            string `json:"eat" form:"eat" gorm:"type:varchar(255)"`

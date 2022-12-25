@@ -2,6 +2,7 @@ package routes
 
 import (
 	"backend/handlers"
+	"backend/pkg/middleware"
 	"backend/pkg/mysql"
 	"backend/repositories"
 
@@ -11,7 +12,7 @@ import (
 func AuthRoutes(r *mux.Router) {
 	authRepository := repositories.RepositoryAuth(mysql.DB)
 	h := handlers.HandlerAuth(authRepository)
-	r.HandleFunc("/register", h.Register).Methods("POST")
+	r.HandleFunc("/register", middleware.UploadFile(h.Register)).Methods("POST")
 	r.HandleFunc("/login", h.Login).Methods("POST")
 
 }

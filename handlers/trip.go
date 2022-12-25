@@ -10,6 +10,7 @@ import (
 	"strconv"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/gorilla/mux"
 )
 
@@ -43,7 +44,7 @@ func (h *handlerTrip) GetTrip(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	id, _ := strconv.Atoi(mux.Vars(r)["id"])
-	var trip models.Trip
+	// var trip models.Trip
 
 	trip, err := h.TripRepository.GetTrip(id)
 	if err != nil {
@@ -54,15 +55,23 @@ func (h *handlerTrip) GetTrip(w http.ResponseWriter, r *http.Request) {
 	trip.Image = path_file + trip.Image
 
 	w.WriteHeader(http.StatusOK)
-	response := dto.SuccessResult{Code: http.StatusOK, Data: trip}
+	response := dto.SuccessResult{Code: http.StatusOK, Data: convertResponseTrip(trip)}
 	json.NewEncoder(w).Encode(response)
 }
 
 func (h *handlerTrip) CreateTrip(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
+	userInfo := r.Context().Value("userInfo").(jwt.MapClaims)
+	status := userInfo["email"]
+	if status != "admin@mail.com" {
+		w.WriteHeader(http.StatusBadRequest)
+		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: "you're not admin"}
+		json.NewEncoder(w).Encode(response)
+		return
+	}
 	dataContex := r.Context().Value("dataFile")
-	filename := dataContex.(string)
+	filename := path_file + dataContex.(string)
 
 	country_id, _ := strconv.Atoi(r.FormValue("country_id"))
 	price, _ := strconv.Atoi(r.FormValue("price"))
@@ -106,7 +115,7 @@ func (h *handlerTrip) CreateTrip(w http.ResponseWriter, r *http.Request) {
 		Image:          filename,
 		CountryID:      request.CountryID,
 	}
-	// fmt.Println(trip)
+
 	trip, err = h.TripRepository.CreateTrip(trip)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -144,7 +153,7 @@ func (h *handlerTrip) UpdateTrip(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	dataContex := r.Context().Value("dataFile")
-	filename := dataContex.(string)
+	filename := path_file + dataContex.(string)
 
 	country_id, _ := strconv.Atoi(r.FormValue("country_id"))
 	price, _ := strconv.Atoi(r.FormValue("price"))
@@ -163,6 +172,7 @@ func (h *handlerTrip) UpdateTrip(w http.ResponseWriter, r *http.Request) {
 		Quota:          quota,
 		Description:    r.FormValue("description"),
 		CountryID:      country_id,
+		Image:          filename,
 	}
 
 	validation := validator.New()
@@ -182,7 +192,7 @@ func (h *handlerTrip) UpdateTrip(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(response)
 		return
 	}
-
+	// fmt.Println(country_id)
 	if request.Title != "" {
 		trip.Title = request.Title
 	}

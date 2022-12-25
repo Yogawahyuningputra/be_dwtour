@@ -4,7 +4,7 @@ type Trip struct {
 	ID             int     `json:"id" gorm:"primary_key:auto_increment"`
 	Title          string  `json:"title" gorm:"type:varchar(255)"`
 	Country        Country `json:"country" gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
-	CountryID      int     `json:"country_id" `
+	CountryID      int     `json:"country_id"`
 	Acomodation    string  `json:"acomodation" gorm:"type:varchar(255)"`
 	Transportation string  `json:"transportation" gorm:"type:varchar(255)"`
 	Eat            string  `json:"eat" gorm:"type:varchar(255)"`
