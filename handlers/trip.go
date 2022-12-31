@@ -5,10 +5,15 @@ import (
 	tripdto "backend/dto/trip"
 	"backend/models"
 	"backend/repositories"
+	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 
+	"github.com/cloudinary/cloudinary-go/v2"
+	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/gorilla/mux"
@@ -18,7 +23,7 @@ type handlerTrip struct {
 	TripRepository repositories.TripRepository
 }
 
-var path_file = "http://localhost:5000/uploads/"
+// var path_file = "http://localhost:5000/uploads/"
 
 func HandlerTrip(TripRepository repositories.TripRepository) *handlerTrip {
 	return &handlerTrip{TripRepository}
@@ -32,9 +37,9 @@ func (h *handlerTrip) FindTrips(w http.ResponseWriter, r *http.Request) {
 		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
 		json.NewEncoder(w).Encode(response)
 	}
-	for i, p := range trips {
-		trips[i].Image = path_file + p.Image
-	}
+	// for i, p := range trips {
+	// 	trips[i].Image = p.Image
+	// }
 	w.WriteHeader(http.StatusOK)
 	response := dto.SuccessResult{Code: http.StatusOK, Data: trips}
 	json.NewEncoder(w).Encode(response)
@@ -52,10 +57,10 @@ func (h *handlerTrip) GetTrip(w http.ResponseWriter, r *http.Request) {
 		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
 		json.NewEncoder(w).Encode(response)
 	}
-	trip.Image = path_file + trip.Image
+	// trip.Image = path_file + trip.Image
 
 	w.WriteHeader(http.StatusOK)
-	response := dto.SuccessResult{Code: http.StatusOK, Data: convertResponseTrip(trip)}
+	response := dto.SuccessResult{Code: http.StatusOK, Data: trip}
 	json.NewEncoder(w).Encode(response)
 }
 
@@ -63,15 +68,15 @@ func (h *handlerTrip) CreateTrip(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	userInfo := r.Context().Value("userInfo").(jwt.MapClaims)
-	status := userInfo["email"]
-	if status != "admin@mail.com" {
+	status := userInfo["role"]
+	if status != "admin" {
 		w.WriteHeader(http.StatusBadRequest)
 		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: "you're not admin"}
 		json.NewEncoder(w).Encode(response)
 		return
 	}
 	dataContex := r.Context().Value("dataFile")
-	filename := path_file + dataContex.(string)
+	filepath := dataContex.(string)
 
 	country_id, _ := strconv.Atoi(r.FormValue("country_id"))
 	price, _ := strconv.Atoi(r.FormValue("price"))
@@ -100,6 +105,22 @@ func (h *handlerTrip) CreateTrip(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(response)
 		return
 	}
+
+	// Get cloudinary from .env
+	var ctx = context.Background()
+	var CLOUD_NAME = os.Getenv("CLOUD_NAME")
+	var API_KEY = os.Getenv("API_KEY")
+	var API_SECRET = os.Getenv("API_SECRET")
+
+	// Add Cloudinary credentials
+	cld, _ := cloudinary.NewFromParams(CLOUD_NAME, API_KEY, API_SECRET)
+
+	// Upload file to Cloudinary
+	resp, err := cld.Upload.Upload(ctx, filepath, uploader.UploadParams{Folder: "dewetour/trip"})
+
+	if err != nil {
+		fmt.Println(err.Error())
+	}
 	trip := models.Trip{
 		ID:             request.ID,
 		Title:          request.Title,
@@ -112,7 +133,7 @@ func (h *handlerTrip) CreateTrip(w http.ResponseWriter, r *http.Request) {
 		Price:          request.Price,
 		Quota:          request.Quota,
 		Description:    request.Description,
-		Image:          filename,
+		Image:          resp.SecureURL,
 		CountryID:      request.CountryID,
 	}
 
@@ -153,7 +174,7 @@ func (h *handlerTrip) UpdateTrip(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	dataContex := r.Context().Value("dataFile")
-	filename := path_file + dataContex.(string)
+	filepath := dataContex.(string)
 
 	country_id, _ := strconv.Atoi(r.FormValue("country_id"))
 	price, _ := strconv.Atoi(r.FormValue("price"))
@@ -172,7 +193,7 @@ func (h *handlerTrip) UpdateTrip(w http.ResponseWriter, r *http.Request) {
 		Quota:          quota,
 		Description:    r.FormValue("description"),
 		CountryID:      country_id,
-		Image:          filename,
+		Image:          filepath,
 	}
 
 	validation := validator.New()
@@ -182,6 +203,20 @@ func (h *handlerTrip) UpdateTrip(w http.ResponseWriter, r *http.Request) {
 		response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
 		json.NewEncoder(w).Encode(response)
 		return
+	}
+	var ctx = context.Background()
+	var CLOUD_NAME = os.Getenv("CLOUD_NAME")
+	var API_KEY = os.Getenv("API_KEY")
+	var API_SECRET = os.Getenv("API_SECRET")
+
+	// Add Cloudinary credentials
+	cld, _ := cloudinary.NewFromParams(CLOUD_NAME, API_KEY, API_SECRET)
+
+	// Upload file to Cloudinary
+	resp, err := cld.Upload.Upload(ctx, filepath, uploader.UploadParams{Folder: "dewetour/trip"})
+
+	if err != nil {
+		fmt.Println(err.Error())
 	}
 
 	id, _ := strconv.Atoi(mux.Vars(r)["id"])
@@ -227,7 +262,7 @@ func (h *handlerTrip) UpdateTrip(w http.ResponseWriter, r *http.Request) {
 		trip.Description = request.Description
 	}
 	if request.Image != "" {
-		trip.Image = filename
+		trip.Image = resp.SecureURL
 	}
 	data, err := h.TripRepository.UpdateTrip(trip, id)
 	if err != nil {

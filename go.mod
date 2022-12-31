@@ -9,7 +9,19 @@ require (
 	gorm.io/gorm v1.24.2
 )
 
-require github.com/joho/godotenv v1.4.0
+require (
+	github.com/cloudinary/cloudinary-go/v2 v2.2.0
+	github.com/gorilla/handlers v1.5.1
+	github.com/joho/godotenv v1.4.0
+)
+
+require (
+	github.com/creasty/defaults v1.5.1 // indirect
+	github.com/felixge/httpsnoop v1.0.3 // indirect
+	github.com/google/uuid v1.2.0 // indirect
+	github.com/gorilla/schema v1.2.0 // indirect
+	github.com/midtrans/midtrans-go v1.3.6 // indirect
+)
 
 require (
 	github.com/go-playground/locales v0.14.0 // indirect

@@ -14,8 +14,9 @@ func TransactionRoutes(r *mux.Router) {
 	h := handlers.HandlerTransaction(transactionRepository)
 	r.HandleFunc("/transactions", middleware.Auth(h.FindTransactions)).Methods("GET")
 	r.HandleFunc("/transaction/{id}", middleware.Auth(h.GetTransaction)).Methods("GET")
-	r.HandleFunc("/transaction", middleware.Auth(middleware.UploadFile(h.CreateTransaction))).Methods("POST")
-	r.HandleFunc("/transaction/{id}", middleware.Auth(middleware.UploadFile(h.UpdateTransaction))).Methods("PATCH")
+	r.HandleFunc("/transaction", middleware.Auth(h.CreateTransaction)).Methods("POST")
+	r.HandleFunc("/transaction/{id}", middleware.Auth(h.UpdateTransaction)).Methods("PATCH")
+	r.HandleFunc("/approve/{id}", middleware.Auth(h.ApproveTransaction)).Methods("PATCH")
 	r.HandleFunc("/transaction/{id}", middleware.Auth(h.DeleteTransaction)).Methods("DELETE")
 
 }

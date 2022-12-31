@@ -18,8 +18,6 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
-var path_profile = "http://localhost:5000/uploads/"
-
 type handlerAuth struct {
 	AuthRepository repositories.AuthRepository
 }
@@ -31,8 +29,8 @@ func HandlerAuth(AuthRepository repositories.AuthRepository) *handlerAuth {
 func (h *handlerAuth) Register(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	dataContex := r.Context().Value("dataFile")
-	filename := path_profile + dataContex.(string)
+	// dataContex := r.Context().Value("dataFile")
+	// filepath := dataContex.(string)
 
 	phone, _ := strconv.Atoi(r.FormValue("phone"))
 	request := authdto.RegisterRequest{
@@ -42,6 +40,7 @@ func (h *handlerAuth) Register(w http.ResponseWriter, r *http.Request) {
 		Gender:   r.FormValue("gender"),
 		Phone:    phone,
 		Address:  r.FormValue("address"),
+		Role:     r.FormValue("role"),
 	}
 
 	validation := validator.New()
@@ -52,6 +51,21 @@ func (h *handlerAuth) Register(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(response)
 		return
 	}
+
+	// var ctx = context.Background()
+	// var CLOUD_NAME = os.Getenv("CLOUD_NAME")
+	// var API_KEY = os.Getenv("API_KEY")
+	// var API_SECRET = os.Getenv("API_SECRET")
+
+	// // Add Cloudinary credentials
+	// cld, _ := cloudinary.NewFromParams(CLOUD_NAME, API_KEY, API_SECRET)
+
+	// // Upload file to Cloudinary
+	// resp, err := cld.Upload.Upload(ctx, filepath, uploader.UploadParams{Folder: "dewetour/profile"})
+
+	// if err != nil {
+	// 	fmt.Println(err.Error())
+	// }
 
 	password, err := bcrypt.HashingPassword(request.Password)
 	if err != nil {
@@ -67,7 +81,8 @@ func (h *handlerAuth) Register(w http.ResponseWriter, r *http.Request) {
 		Gender:   request.Gender,
 		Phone:    request.Phone,
 		Address:  request.Address,
-		Image:    filename,
+		// Image:    resp.SecureURL,
+		Role: "user",
 	}
 
 	data, err := h.AuthRepository.Register(user)
@@ -95,7 +110,8 @@ func (h *handlerAuth) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user, err := h.AuthRepository.Login(user.Email)
-	fmt.Println("user login", user)
+	// fmt.Println("user login", user)
+
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: "Wrong email"}
@@ -113,7 +129,7 @@ func (h *handlerAuth) Login(w http.ResponseWriter, r *http.Request) {
 
 	claims := jwt.MapClaims{}
 	claims["id"] = user.ID
-	claims["email"] = user.Email
+	claims["role"] = user.Role
 	claims["exp"] = time.Now().Add(time.Hour * 2).Unix() // 2 jam expire
 
 	token, errGenerateToken := jwtToken.GenerateToken(&claims)
@@ -126,10 +142,43 @@ func (h *handlerAuth) Login(w http.ResponseWriter, r *http.Request) {
 	LoginResponse := authdto.LoginResponse{
 		Email: user.Email,
 		Token: token,
+		Role:  user.Role,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	response := dto.SuccessResult{Code: http.StatusOK, Data: LoginResponse}
 	json.NewEncoder(w).Encode(response)
 
+}
+
+func (h *handlerAuth) CheckAuth(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	userInfo := r.Context().Value("userInfo").(jwt.MapClaims)
+	userId := int(userInfo["id"].(float64))
+
+	// Check User by Id
+	user, err := h.AuthRepository.GetUserAuth(userId)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+	// fmt.Println(userId)
+
+	CheckAuthResponse := authdto.CheckAuthResponse{
+		ID:       user.ID,
+		Fullname: user.Fullname,
+		Email:    user.Email,
+		Gender:   user.Gender,
+		Phone:    user.Phone,
+		Address:  user.Address,
+		Role:     user.Role,
+		Image:    user.Image,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	response := dto.SuccessResult{Code: http.StatusOK, Data: CheckAuthResponse}
+	json.NewEncoder(w).Encode(response)
 }

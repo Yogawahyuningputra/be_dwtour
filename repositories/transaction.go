@@ -35,9 +35,8 @@ func (r *repository) CreateTransaction(transaction models.Transaction) (models.T
 	return transaction, err
 }
 func (r *repository) UpdateTransaction(transaction models.Transaction, ID int) (models.Transaction, error) {
-	// fmt.Println(transaction.TripID, ID)
-	// err := r.db.Save(&transaction).Error
-	err := r.db.Raw(`UPDATE transactions SET qty = ?, status = ?, attachment = ?, total = ?, trip_id = ?, user_id = ?, created_at = ?, updated_at = ? WHERE transactions.id = ?`, transaction.Qty, transaction.Status, transaction.Attachment, transaction.Total, transaction.TripID, transaction.UserID, transaction.CreatedAt, transaction.UpdatedAt, transaction.ID).Scan(&transaction).Error
+	err := r.db.Model(&transaction).Updates(transaction).Error
+	// err := r.db.Raw(`UPDATE transactions SET qty = ?, status = ?, attachment = ?, total = ?, trip_id = ?, user_id = ?, created_at = ?, updated_at = ? WHERE transactions.id = ?`, transaction.Qty, transaction.Status, transaction.Attachment, transaction.Total, transaction.TripID, transaction.UserID, transaction.CreatedAt, transaction.UpdatedAt, transaction.ID).Scan(&transaction).Error
 	return transaction, err
 }
 func (r *repository) DeleteTransaction(transaction models.Transaction, ID int) (models.Transaction, error) {

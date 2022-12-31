@@ -4,14 +4,20 @@ import (
 	dto "backend/dto/result"
 	userdto "backend/dto/user"
 	"backend/pkg/bcrypt"
+	"context"
 	"encoding/json"
+	"fmt"
+	"os"
 
 	"backend/models"
 	"backend/repositories"
 	"net/http"
 	"strconv"
 
+	"github.com/cloudinary/cloudinary-go/v2"
+	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 	"github.com/go-playground/validator/v10"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/gorilla/mux"
 )
 
@@ -64,6 +70,7 @@ func convertResponse(u models.User) userdto.UserResponse {
 		Gender:   u.Gender,
 		Address:  u.Address,
 		Image:    u.Image,
+		Role:     u.Role,
 	}
 }
 
@@ -71,7 +78,7 @@ func (h *handlerUser) CreateUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", "application/json")
 
 	dataContex := r.Context().Value("dataFile")
-	filename := path_profile + dataContex.(string)
+	filepath := dataContex.(string)
 
 	phone, _ := strconv.Atoi(r.FormValue("phone"))
 	request := userdto.CreateUserRequest{
@@ -81,6 +88,7 @@ func (h *handlerUser) CreateUser(w http.ResponseWriter, r *http.Request) {
 		Gender:   r.FormValue("gender"),
 		Phone:    phone,
 		Address:  r.FormValue("address"),
+		Role:     r.FormValue("role"),
 	}
 	validation := validator.New()
 	err := validation.Struct(request)
@@ -90,6 +98,21 @@ func (h *handlerUser) CreateUser(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(response)
 		return
 	}
+	var ctx = context.Background()
+	var CLOUD_NAME = os.Getenv("CLOUD_NAME")
+	var API_KEY = os.Getenv("API_KEY")
+	var API_SECRET = os.Getenv("API_SECRET")
+
+	// Add Cloudinary credentials
+	cld, _ := cloudinary.NewFromParams(CLOUD_NAME, API_KEY, API_SECRET)
+
+	// Upload file to Cloudinary
+	resp, err := cld.Upload.Upload(ctx, filepath, uploader.UploadParams{Folder: "dewetour/profile"})
+
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+
 	password, err := bcrypt.HashingPassword(request.Password)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -103,7 +126,8 @@ func (h *handlerUser) CreateUser(w http.ResponseWriter, r *http.Request) {
 		Gender:   request.Gender,
 		Phone:    request.Phone,
 		Address:  request.Address,
-		Image:    filename,
+		Role:     "user",
+		Image:    resp.SecureURL,
 	}
 
 	data, err := h.UserRepository.CreateUser(user)
@@ -120,8 +144,11 @@ func (h *handlerUser) CreateUser(w http.ResponseWriter, r *http.Request) {
 func (h *handlerUser) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
+	userInfo := r.Context().Value("userInfo").(jwt.MapClaims)
+	userId := int(userInfo["id"].(float64))
+
 	dataContex := r.Context().Value("dataFile")
-	filename := path_profile + dataContex.(string)
+	filepath := dataContex.(string)
 
 	phone, _ := strconv.Atoi(r.FormValue("phone"))
 	request := userdto.CreateUserRequest{
@@ -131,17 +158,32 @@ func (h *handlerUser) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		Gender:   r.FormValue("gender"),
 		Phone:    phone,
 		Address:  r.FormValue("address"),
-		Image:    filename,
+		Image:    filepath,
 	}
 
 	id, _ := strconv.Atoi(mux.Vars(r)["id"])
 	// user := models.User{}
-	user, err := h.UserRepository.GetUser(int(id))
+	user, err := h.UserRepository.GetUser(userId)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
 		json.NewEncoder(w).Encode(response)
 		return
+	}
+
+	var ctx = context.Background()
+	var CLOUD_NAME = os.Getenv("CLOUD_NAME")
+	var API_KEY = os.Getenv("API_KEY")
+	var API_SECRET = os.Getenv("API_SECRET")
+
+	// Add Cloudinary credentials
+	cld, _ := cloudinary.NewFromParams(CLOUD_NAME, API_KEY, API_SECRET)
+
+	// Upload file to Cloudinary
+	resp, err := cld.Upload.Upload(ctx, filepath, uploader.UploadParams{Folder: "dewetour/profile"})
+
+	if err != nil {
+		fmt.Println(err.Error())
 	}
 	password, err := bcrypt.HashingPassword(request.Password)
 	if err != nil {
@@ -169,7 +211,7 @@ func (h *handlerUser) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		user.Address = request.Address
 	}
 	if request.Image != "" {
-		user.Image = filename
+		user.Image = resp.SecureURL
 	}
 	data, err := h.UserRepository.UpdateUser(user, id)
 	if err != nil {

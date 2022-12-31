@@ -28,7 +28,7 @@ func (r *repository) FindTrips() ([]models.Trip, error) {
 func (r *repository) GetTrip(ID int) (models.Trip, error) {
 	var trip models.Trip
 	// err := r.db.Raw("SELECT * FROM trips WHERE id=?", ID).Scan(&trip).Error
-	err := r.db.First(&trip, ID).Error // ORM
+	err := r.db.Preload("Country").First(&trip, ID).Error // ORM
 	return trip, err
 }
 
