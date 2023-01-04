@@ -12,6 +12,8 @@ type TransactionRepository interface {
 	CreateTransaction(transaction models.Transaction) (models.Transaction, error)
 	UpdateTransaction(transaction models.Transaction, ID int) (models.Transaction, error)
 	DeleteTransaction(transaction models.Transaction, ID int) (models.Transaction, error)
+	UpdateStatus(status string, ID int) error
+	// GetOneTransaction(ID string) (models.Transaction, error)
 }
 
 func RepositoryTransaction(db *gorm.DB) *repository {
@@ -26,7 +28,7 @@ func (r *repository) FindTransactions() ([]models.Transaction, error) {
 
 func (r *repository) GetTransaction(ID int) (models.Transaction, error) {
 	var transaction models.Transaction
-	err := r.db.Preload("Trip").Preload("Trip.Country").First(&transaction, ID).Error
+	err := r.db.Preload("Trip").Preload("Trip.Country").Preload("User").First(&transaction, ID).Error
 	return transaction, err
 }
 
@@ -43,3 +45,27 @@ func (r *repository) DeleteTransaction(transaction models.Transaction, ID int) (
 	err := r.db.Delete(&transaction).Error
 	return transaction, err
 }
+
+func (r *repository) UpdateStatus(status string, ID int) error {
+	var transaction models.Transaction
+	r.db.Preload("Trip").First(&transaction, ID)
+
+	if status != transaction.Status && status == "success" {
+		var trip models.Trip
+		r.db.First(&trip, transaction.Trip.ID)
+		trip.Quota = trip.Quota - transaction.Qty
+		r.db.Save(&trip)
+	}
+	transaction.Status = status
+
+	err := r.db.Save(&transaction).Error
+
+	return err
+}
+
+// func (r *repository) GetOneTransaction(ID string) (models.Transaction, error) {
+// 	var transaction models.Transaction
+// 	err := r.db.Preload("Trip").Preload("Trip.Country").Preload("User").First(&transaction, "id = ?", ID).Error
+
+// 	return transaction, err
+// }

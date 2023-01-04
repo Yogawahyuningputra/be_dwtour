@@ -13,6 +13,8 @@ require (
 	github.com/cloudinary/cloudinary-go/v2 v2.2.0
 	github.com/gorilla/handlers v1.5.1
 	github.com/joho/godotenv v1.4.0
+	github.com/midtrans/midtrans-go v1.3.6
+	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 )
 
 require (
@@ -20,7 +22,7 @@ require (
 	github.com/felixge/httpsnoop v1.0.3 // indirect
 	github.com/google/uuid v1.2.0 // indirect
 	github.com/gorilla/schema v1.2.0 // indirect
-	github.com/midtrans/midtrans-go v1.3.6 // indirect
+	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 )
 
 require (
