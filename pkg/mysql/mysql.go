@@ -19,8 +19,10 @@ func Databaseinit() {
 	var err error
 	// refer https://github.com/go-sql-driver/mysql#dsn-data-source-name for details
 	// dsn := "root:@tcp(127.0.0.1:3306)/dewetour?charset=utf8mb4&parseTime=True&loc=Local"
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s", DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, DB_PORT)
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME)
 
+	//with postgresql
+	// dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s", DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, DB_PORT)
 	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		panic(err)
