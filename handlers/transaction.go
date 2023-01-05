@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt/v4"
@@ -91,17 +92,17 @@ func (h *handlerTransaction) CreateTransaction(w http.ResponseWriter, r *http.Re
 	total, _ := strconv.Atoi(r.FormValue("total"))
 
 	//create unique idtransaction
-	// var transIDisMatch = false
-	// var transactionID int
+	var transIDisMatch = false
+	var transactionID int
 
-	// for !transIDisMatch {
-	// 	transactionID = int(time.Now().Unix())
-	// 	request, _ := h.TransactionRepository.GetTransaction(transactionID)
-	// 	if request.ID == 0 {
-	// 		transIDisMatch = true
-	// 	}
+	for !transIDisMatch {
+		transactionID = int(time.Now().Unix())
+		request, _ := h.TransactionRepository.GetTransaction(transactionID)
+		if request.ID == 0 {
+			transIDisMatch = true
+		}
 
-	// }
+	}
 	// fmt.Println("ini transUnix", transactionID)
 
 	request := transactiondto.TransactionRequest{
@@ -138,6 +139,7 @@ func (h *handlerTransaction) CreateTransaction(w http.ResponseWriter, r *http.Re
 	// }
 
 	transaction := models.Transaction{
+		ID:     transactionID,
 		Qty:    request.Qty,
 		Status: "Waiting Payment",
 		// Attachment: resp.SecureURL,
@@ -464,7 +466,7 @@ func (h *handlerTransaction) Notification(w http.ResponseWriter, r *http.Request
 
 		} else if fraudStatus == "accept" {
 			// TODO set transaction status on your database to 'success'
-			SendMail("accept", transaction)
+			SendMail("approve", transaction)
 			h.TransactionRepository.UpdateStatus("success", transaction.ID)
 		}
 	} else if transactionStatus == "settlement" {
